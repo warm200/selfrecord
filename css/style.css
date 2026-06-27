@@ -1,0 +1,168 @@
+/*
+  样式：干净、安静、适合私人记录。
+  自动适配浅色 / 深色模式。
+*/
+
+:root {
+  --accent: #708594;        /* 主题色：灰蓝 */
+  --bg: #f7f7f5;            /* 背景：米白 */
+  --card: #ffffff;          /* 卡片背景 */
+  --text: #2b2b2b;          /* 主文字 */
+  --text-soft: #8a8a8a;     /* 次要文字 */
+  --line: #ececec;          /* 分隔线 */
+  --danger: #c0564b;        /* 删除红 */
+  --radius: 14px;
+  /* iPhone 安全区，避免内容被刘海/底部横条遮住 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161618;
+    --card: #232325;
+    --text: #f0f0f0;
+    --text-soft: #9a9a9a;
+    --line: #333336;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app { min-height: 100vh; }
+
+/* ---------- 顶部标题栏 ---------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(var(--safe-top) + 14px) 18px 14px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav h1 { font-size: 20px; font-weight: 600; margin: 0; }
+.nav .nav-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 500;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+.nav .nav-btn.danger { color: var(--danger); }
+.nav .nav-spacer { flex: 1; }
+
+/* ---------- 内容区 ---------- */
+.content { padding: 16px 18px calc(var(--safe-bottom) + 120px); }
+
+/* ---------- 列表 ---------- */
+.empty {
+  text-align: center;
+  color: var(--text-soft);
+  margin-top: 25vh;
+}
+.empty .big { font-size: 40px; margin-bottom: 10px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform .06s ease;
+}
+.card:active { transform: scale(0.99); }
+.card .date { font-weight: 600; margin-bottom: 4px; }
+.card .preview {
+  color: var(--text-soft);
+  font-size: 15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- 表单 / 问题 ---------- */
+.question { margin-bottom: 22px; }
+.question label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.question textarea {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  padding: 12px 14px;
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  outline: none;
+}
+.question textarea:focus { border-color: var(--accent); }
+
+/* ---------- 详情页 ---------- */
+.detail-block { margin-bottom: 20px; }
+.detail-block .q {
+  font-size: 14px;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+}
+.detail-block .a { white-space: pre-wrap; word-break: break-word; }
+.detail-block .a.empty-a { color: var(--text-soft); }
+
+.delete-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--danger);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---------- 底部中间的 “+” 按钮 ---------- */
+.fab {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-bottom) + 24px);
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 32px;
+  line-height: 62px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+  z-index: 20;
+}
+.fab:active { transform: translateX(-50%) scale(0.95); }
