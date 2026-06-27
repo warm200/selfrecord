@@ -1,19 +1,21 @@
 /*
-  sw.js —— Service Worker，让 App 添加到主屏幕后可以离线打开。
-  做的事很简单：第一次访问时把这些文件缓存下来，
-  之后就算没有网络也能正常打开（数据本来就存在本地）。
+  sw.js —— Service Worker，让 App 添加到主屏幕后可离线打开。
 
-  说明：修改了代码后，把下面的 CACHE 版本号 +1（如 v2、v3），
-  手机上重新打开一次即可更新缓存。
+  策略：网络优先（network-first）。
+  - 有网络时：总是去拿服务器上的最新文件，所以你每次 push 部署后都会自动看到最新版，
+    不需要再手动改任何版本号。
+  - 没网络时：用上次缓存下来的文件，照常打开（数据本来就在本地）。
 */
 
-const CACHE = 'selfrecord-v1';
+const CACHE = 'selfrecord';
 
+// 首次访问时缓存这些文件，保证之后离线也能打开。
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/storage.js',
+  './js/lock.js',
   './js/app.js',
   './manifest.webmanifest',
   './icons/icon-180.png',
@@ -21,15 +23,11 @@ const ASSETS = [
   './icons/icon-512.png'
 ];
 
-// 安装：缓存核心文件
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
-// 激活：清理旧版本缓存
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -39,10 +37,20 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// 请求：优先用缓存，没有再走网络（离线优先）
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  // 只处理本站自己的文件
+  if (new URL(req.url).origin !== location.origin) return;
+
+  // 网络优先：拿到最新就顺手更新缓存；断网则回退到缓存。
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+    fetch(req)
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(cache => cache.put(req, copy));
+        return res;
+      })
+      .catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
   );
 });

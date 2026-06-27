@@ -83,5 +83,10 @@ const Store = {
   remove(id) {
     const list = this.all().filter(r => r.id !== id);
     this.saveAll(list);
+  },
+
+  // 删除全部记录（重置密码时使用）
+  clearAll() {
+    localStorage.removeItem(this.KEY);
   }
 };

@@ -1,6 +1,6 @@
 /*
   app.js —— 界面与交互。
-  整个 App 只有一个页面，靠 JS 在「列表 / 新建·编辑 / 详情」三个视图之间切换。
+  视图：解锁/设置密码 → 列表 → 新建·编辑 / 详情 / 修改密码。
 */
 
 // 六个问题。这个数组同时驱动「新建页」和「详情页」，改文字只需改这里。
@@ -17,7 +17,6 @@ const app = document.getElementById('app');
 
 // ---------- 小工具 ----------
 
-// 把时间格式化成中文可读的日期
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleString('zh-CN', {
@@ -26,14 +25,12 @@ function formatDate(iso) {
   });
 }
 
-// 转义文本，安全地放进 HTML
 function esc(s) {
   return String(s || '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
 
-// 列表里显示的简短预览：拼接所有非空答案
 function previewOf(record) {
   const parts = QUESTIONS
     .map(q => (record[q.key] || '').trim())
@@ -41,8 +38,109 @@ function previewOf(record) {
   return parts.length ? parts.join(' · ') : '（空白记录）';
 }
 
-// ---------- 视图一：历史列表（主页面） ----------
+// ========== 密码锁相关视图 ==========
 
+// 第一次使用：设置密码
+function renderSetPasscode() {
+  app.innerHTML = `
+    <div class="nav"><h1 style="flex:1;text-align:center">设置密码</h1></div>
+    <div class="content">
+      <p class="lock-tip">第一次使用，请设置一个密码来保护你的记录。</p>
+      <div class="question">
+        <label for="pin1">新密码</label>
+        <input type="password" id="pin1" class="pin-input" placeholder="至少 4 位">
+      </div>
+      <div class="question">
+        <label for="pin2">确认密码</label>
+        <input type="password" id="pin2" class="pin-input" placeholder="再次输入">
+      </div>
+      <div class="lock-error" id="err"></div>
+      <button class="primary-btn" id="ok">设置并进入</button>
+    </div>
+  `;
+  const err = document.getElementById('err');
+  document.getElementById('ok').onclick = async () => {
+    const a = document.getElementById('pin1').value;
+    const b = document.getElementById('pin2').value;
+    if (a.length < 4) { err.textContent = '密码至少 4 位。'; return; }
+    if (a !== b) { err.textContent = '两次输入不一致。'; return; }
+    await Lock.set(a);
+    renderList();
+  };
+}
+
+// 已设置过：输入密码解锁
+function renderLock() {
+  app.innerHTML = `
+    <div class="nav"><h1 style="flex:1;text-align:center">已锁定</h1></div>
+    <div class="content lock-screen">
+      <div class="lock-icon">🔒</div>
+      <div class="question" style="width:100%">
+        <input type="password" id="pin" class="pin-input" placeholder="输入密码解锁">
+      </div>
+      <div class="lock-error" id="err"></div>
+      <button class="primary-btn" id="unlock">解锁</button>
+      <button class="text-btn danger" id="forgot">忘记密码？重置</button>
+    </div>
+  `;
+  const err = document.getElementById('err');
+  const pin = document.getElementById('pin');
+
+  async function tryUnlock() {
+    if (await Lock.verify(pin.value)) {
+      renderList();
+    } else {
+      err.textContent = '密码不对，再试一次。';
+      pin.value = '';
+      pin.focus();
+    }
+  }
+
+  document.getElementById('unlock').onclick = tryUnlock;
+  pin.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  pin.focus();
+
+  document.getElementById('forgot').onclick = () => {
+    if (confirm('重置会删除全部记录，且无法恢复。\n确定要重置吗？')) {
+      Store.clearAll();
+      Lock.clear();
+      renderSetPasscode();
+    }
+  };
+}
+
+// 修改密码（已解锁状态下）
+function renderChangePasscode() {
+  app.innerHTML = `
+    <div class="nav">
+      <button class="nav-btn" id="cancel">取消</button>
+      <h1 style="flex:1;text-align:center">修改密码</h1>
+      <button class="nav-btn" id="save">保存</button>
+    </div>
+    <div class="content">
+      <div class="question"><label for="cur">当前密码</label><input type="password" id="cur" class="pin-input"></div>
+      <div class="question"><label for="n1">新密码</label><input type="password" id="n1" class="pin-input" placeholder="至少 4 位"></div>
+      <div class="question"><label for="n2">确认新密码</label><input type="password" id="n2" class="pin-input"></div>
+      <div class="lock-error" id="err"></div>
+    </div>
+  `;
+  const err = document.getElementById('err');
+  document.getElementById('cancel').onclick = () => renderList();
+  document.getElementById('save').onclick = async () => {
+    const ok = await Lock.verify(document.getElementById('cur').value);
+    if (!ok) { err.textContent = '当前密码不对。'; return; }
+    const a = document.getElementById('n1').value;
+    const b = document.getElementById('n2').value;
+    if (a.length < 4) { err.textContent = '新密码至少 4 位。'; return; }
+    if (a !== b) { err.textContent = '两次输入不一致。'; return; }
+    await Lock.set(a);
+    renderList();
+  };
+}
+
+// ========== 记录相关视图 ==========
+
+// 视图一：历史列表（主页面）
 function renderList() {
   const records = Store.all();
 
@@ -54,28 +152,35 @@ function renderList() {
   `).join('');
 
   const body = records.length
-    ? `<div class="content">${cards}</div>`
+    ? `<div class="content">${cards}
+         <button class="text-btn" id="pw-btn">修改密码</button>
+       </div>`
     : `<div class="empty">
          <div class="big">✎</div>
          <div>还没有记录</div>
          <div>点击下方的 + 写下今天</div>
+         <button class="text-btn" id="pw-btn" style="margin-top:24px">修改密码</button>
        </div>`;
 
   app.innerHTML = `
-    <div class="nav"><h1>我的记录</h1></div>
+    <div class="nav">
+      <button class="nav-btn" id="lock-btn">🔒 锁定</button>
+      <h1 style="flex:1;text-align:center">我的记录</h1>
+      <span style="width:64px"></span>
+    </div>
     ${body}
     <button class="fab" id="add-btn" aria-label="新建记录">+</button>
   `;
 
   document.getElementById('add-btn').onclick = () => renderEditor(null);
+  document.getElementById('lock-btn').onclick = () => renderLock();
+  document.getElementById('pw-btn').onclick = () => renderChangePasscode();
   document.querySelectorAll('.card').forEach(el => {
     el.onclick = () => renderDetail(el.dataset.id);
   });
 }
 
-// ---------- 视图二：新建 / 编辑 ----------
-// record 为 null 表示新建；传入记录表示编辑。
-
+// 视图二：新建 / 编辑（record 为 null 表示新建）
 function renderEditor(record) {
   const isEdit = !!record;
 
@@ -89,18 +194,15 @@ function renderEditor(record) {
   app.innerHTML = `
     <div class="nav">
       <button class="nav-btn" id="cancel-btn">取消</button>
-      <div class="nav-spacer" style="text-align:center;font-weight:600">${isEdit ? '编辑记录' : '新建记录'}</div>
+      <h1 style="flex:1;text-align:center">${isEdit ? '编辑记录' : '新建记录'}</h1>
       <button class="nav-btn" id="save-btn">保存</button>
     </div>
     <div class="content">${fields}</div>
   `;
 
-  // 收集输入框里的内容
   function collect() {
     const data = {};
-    QUESTIONS.forEach(q => {
-      data[q.key] = document.getElementById(q.key).value;
-    });
+    QUESTIONS.forEach(q => { data[q.key] = document.getElementById(q.key).value; });
     return data;
   }
 
@@ -119,13 +221,11 @@ function renderEditor(record) {
     }
   };
 
-  // 自动聚焦第一个输入框
   const first = document.getElementById(QUESTIONS[0].key);
   if (first) first.focus();
 }
 
-// ---------- 视图三：详情 ----------
-
+// 视图三：详情
 function renderDetail(id) {
   const record = Store.get(id);
   if (!record) { renderList(); return; }
@@ -166,13 +266,17 @@ function renderDetail(id) {
 }
 
 // ---------- 启动 ----------
+// 没设置过密码 → 去设置；已设置 → 先解锁。
+if (Lock.isSet()) {
+  renderLock();
+} else {
+  renderSetPasscode();
+}
 
-renderList();
-
-// 注册 Service Worker，让 App 添加到主屏幕后可以离线使用。
+// 注册 Service Worker（让 App 添加到主屏幕后可离线使用）。
 // 只有在 http/https 下（如 GitHub Pages）才注册；本地 file:// 打开会自动跳过。
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* 离线功能不可用也不影响正常使用 */ });
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
