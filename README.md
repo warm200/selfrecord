@@ -1,19 +1,23 @@
-# SelfRecord（极简本地记录 App）
+# 我的记录（极简本地记录 · 网页版 PWA）
 
-一个只在 iPhone 本地保存数据的极简记录 App：**不需要登录、不需要联网、不需要云同步、不需要服务器**。
-使用 Swift + SwiftUI 编写，本地存储用的是 **SwiftData**。
+一个**不用 Swift、不用 Xcode、不用上架 App Store**，就能在 iPhone 上像原生 App 一样运行的极简记录应用。
+
+- 纯 **HTML + CSS + 原生 JavaScript**，**零框架、零依赖、零构建**。
+- 数据用浏览器 **localStorage** 保存在**手机本地**：不联网、不登录、不同步、不上传服务器。
+- 做成 **PWA**：用 Safari「添加到主屏幕」后，**全屏运行、独立图标、可离线**，体验接近原生。
+
+> 为什么用 PWA？这是目前“只给自己用、不进 App Store、还想要 App 体验”的最现代、最省事的做法：
+> 没有 Apple 开发者账号、没有签名、没有 7 天过期问题，改完代码刷新即更新。
 
 ---
 
 ## 一、功能
 
-- 主页面按日期倒序显示所有历史记录（最新的在最上面）。
+- 主页面按日期倒序显示所有历史记录（最新在最上面）。
 - 每条记录显示创建日期 + 所有答案的简短预览。
-- 底部中间有一个圆形 “+” 按钮，点击后打开新建记录页面。
-- 新建页面有六个问题，每个问题下面是可多行输入的文本框。
-- 填写后点“保存”，自动返回主页面并看到新记录。
-- 点击任意记录进入详情页，可查看完整内容、**编辑**、**删除**。
-- 列表里也可以左滑删除。
+- 底部中间有圆形 “+” 按钮，点击进入新建页面。
+- 新建页面六个问题，每题一个多行输入框；点“保存”返回主页面并看到新记录。
+- 点任意记录进入详情页，可查看完整内容、**编辑**、**删除**。
 
 六个问题：
 1. 今天什么时候最有能量？
@@ -28,86 +32,64 @@
 ## 二、项目结构
 
 ```
-SelfRecord.xcodeproj        ← Xcode 工程文件（直接双击打开）
-SelfRecord/
-├── SelfRecordApp.swift       App 入口，挂载 SwiftData 本地数据库
-├── Models/
-│   └── DailyRecord.swift     数据模型（一条记录的所有字段）+ 六个问题文字
-├── Views/
-│   ├── RecordListView.swift     主页面：历史列表 + “+” 按钮
-│   ├── RecordEditorView.swift   新建 / 编辑页面
-│   └── RecordDetailView.swift   详情页：查看 / 编辑 / 删除
-└── Assets.xcassets/          App 图标与主题色占位
+index.html               入口页面
+manifest.webmanifest     PWA 配置（名字、图标、全屏显示）
+sw.js                    Service Worker，提供离线能力
+css/
+└── style.css            样式（自动适配深色/浅色模式）
+js/
+├── storage.js           本地数据存取（localStorage 增删改查）
+└── app.js              界面与交互（列表 / 新建·编辑 / 详情 三个视图）
+icons/
+├── icon-180.png         iOS 主屏幕图标
+├── icon-192.png
+└── icon-512.png
 ```
 
-数据模型 `DailyRecord` 字段：
+数据模型（一条记录）：
 `id`、`createdAt`、`energyMoment`、`tiredMoment`、`peoplePleasingMoment`、
 `trueDesire`、`unexpressedEmotion`、`selfAction`。
 
 ---
 
-## 三、运行到 iPhone（推荐方式：直接打开本工程）
+## 三、怎么在 iPhone 上用（推荐：GitHub Pages 免费托管）
 
-> 需要 **Xcode 16 或更新版本**（本工程使用了 Xcode 16 的新工程格式）。
-> 系统要求：iPhone 为 **iOS 17 或更新**。
+PWA 需要一个网址（https）才能「添加到主屏幕 + 离线」。最省事的是用本仓库自带的 GitHub Pages：
 
-### 1. 打开工程
-1. 把本仓库下载/克隆到 Mac 上。
-2. 双击 `SelfRecord.xcodeproj`，用 Xcode 打开。
+### 1. 打开 GitHub Pages
+1. 浏览器打开本仓库 → 顶部 **Settings（设置）** → 左侧 **Pages**。
+2. **Source** 选 **Deploy from a branch**。
+3. **Branch** 选 `claude/ios-journaling-app-o7ieyl`（或你合并后的 `main`），文件夹选 **/(root)**，点 **Save**。
+4. 等一两分钟，页面顶部会出现一个网址，形如：
+   `https://warm200.github.io/selfrecord/`
 
-### 2. 配置签名（Signing，第一次必须做）
-1. 在左侧选中最上面的蓝色项目图标 **SelfRecord**。
-2. 选中 TARGETS 下的 **SelfRecord**，打开顶部 **Signing & Capabilities** 标签。
-3. 勾选 **Automatically manage signing（自动管理签名）**。
-4. 在 **Team** 下拉里选择你的 Apple ID。
-   - 如果没有 Team：点 Xcode 菜单 **Settings → Accounts → 左下角 “+” → Apple ID**，
-     用你自己的 Apple ID 登录（**免费账号即可**，不需要付费开发者账号）。
-5. 把 **Bundle Identifier** 改成一个全世界唯一的名字，例如
-   `com.你的名字.SelfRecord`（默认是 `com.example.SelfRecord`，建议改掉）。
-   改完后 Xcode 会自动生成证书，出现绿色对勾即成功。
+### 2. 添加到 iPhone 主屏幕
+1. 用 iPhone 的 **Safari**（必须是 Safari）打开上面的网址。
+2. 点底部中间的 **分享按钮** → 往下找 **「添加到主屏幕」** → **添加**。
+3. 桌面上会出现「我的记录」图标，点开即全屏运行，和普通 App 一样。
+4. 之后**断网也能打开**，数据一直存在你手机本地。
 
-### 3. 连接 iPhone 并运行
-1. 用数据线把 iPhone 连到 Mac（第一次会弹出“信任此电脑”，点信任）。
-2. 在 Xcode 顶部中间的设备选择处，选中你的 iPhone（不是模拟器）。
-3. 点左上角的 ▶️（Run）按钮，等待编译安装。
-
-### 4. 在 iPhone 上信任开发者（免费账号第一次必做）
-第一次运行 App 可能在手机上打不开，提示“不受信任的开发者”：
-1. iPhone 打开 **设置 → 通用 → VPN与设备管理（或“描述文件与设备管理”）**。
-2. 找到你的 Apple ID，点 **信任**。
-3. 回到桌面再次点开 App 即可。
-
-> 说明：用免费 Apple ID 安装的 App，有效期约 7 天，过期后在 Xcode 里重新 Run 一次即可。
-> 这对“只给自己用”的 App 完全够用，无需上架 App Store。
+> 更新代码后：把改动 push 到上面那个分支，等 Pages 重新部署；
+> 手机上把 App 划掉重开一次即可看到更新（若没更新，见第五节缓存说明）。
 
 ---
 
-## 四、备用方式：自己在 Xcode 里新建工程并粘贴代码
+## 四、本地快速预览（在电脑上先试一下，可选）
 
-如果你的 Xcode 版本较老、打不开本工程，可以手动新建：
-
-1. Xcode → **File → New → Project → iOS → App → Next**。
-2. Product Name 填 `SelfRecord`；
-   Interface 选 **SwiftUI**；Language 选 **Swift**；
-   Storage 选 **SwiftData**（如果没有这个选项就选 None，代码里已经自己配置好了）。
-3. 创建后，把本仓库 `SelfRecord/` 文件夹里的几个 `.swift` 文件内容，
-   逐一**覆盖**到 Xcode 自动生成的同名文件里；缺少的文件就 **New File → Swift File** 新建后粘贴。
-   - 确保有这五个文件：`SelfRecordApp.swift`、`DailyRecord.swift`、
-     `RecordListView.swift`、`RecordEditorView.swift`、`RecordDetailView.swift`。
-4. 然后按上面第三节的 **Signing → 连接 iPhone → Run** 步骤运行。
+- 最简单：直接双击 `index.html` 用浏览器打开就能用（离线缓存功能在 `file://` 下不启用，但记录功能正常）。
+- 想完整体验 PWA，可在项目目录起一个本地服务器，例如：
+  ```bash
+  # 任选其一（电脑上已装 Python 或 Node 时）
+  python3 -m http.server 8000
+  npx serve .
+  ```
+  然后浏览器打开 `http://localhost:8000`。
 
 ---
 
-## 五、关于权限
+## 五、说明与小贴士
 
-本 App **不使用相机、麦克风、定位、网络等任何敏感权限**，
-所有数据只通过 SwiftData 存在手机本地沙盒里，因此 **不需要在 Info.plist 里配置任何权限**。
-唯一需要配置的就是上面第三节的 **Signing（签名）**。
-
----
-
-## 六、数据存在哪里 / 会不会丢
-
-- 数据保存在 iPhone 本地（App 的沙盒数据库里），不会上传到任何地方。
-- 删除 App 会一并删除数据，请知悉。
-- 如需备份，可日后自行扩展“导出文本”等功能（当前版本未包含，保持极简）。
+- **数据存在哪**：存在你这台设备这个浏览器的 localStorage 里。换设备、换浏览器、清除浏览器数据都会导致看不到/丢失记录，请知悉（本版本保持极简，未做导出/备份）。
+- **不需要任何权限**：没用相机、定位、网络等，无需授权。
+- **更新缓存**：改了代码后如果手机上还显示旧版本，编辑 `sw.js` 把 `CACHE = 'selfrecord-v1'` 的版本号 +1（如 `v2`），重新部署并重开 App 即可。
+- **想加“导出文本/备份”功能**？告诉我，可以在不引入任何依赖的前提下加上。
