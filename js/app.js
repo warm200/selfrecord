@@ -166,7 +166,7 @@ function renderList() {
   app.innerHTML = `
     <div class="nav">
       <button class="nav-btn" id="lock-btn">🔒 锁定</button>
-      <h1 style="flex:1;text-align:center">我的记录</h1>
+      <h1 style="flex:1;text-align:center">道痕</h1>
       <span style="width:64px"></span>
     </div>
     ${body}
