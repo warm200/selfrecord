@@ -3,14 +3,15 @@
   视图：解锁/设置密码 → 列表 → 新建·编辑 / 详情 / 修改密码。
 */
 
-// 六个问题。这个数组同时驱动「新建页」和「详情页」，改文字只需改这里。
+// 七个问题（「道痕」模板）。这个数组同时驱动「新建页」和「详情页」，改文字只需改这里。
 const QUESTIONS = [
-  { key: 'energyMoment',         text: '今天什么时候最有能量？' },
-  { key: 'tiredMoment',          text: '今天什么时候最疲惫？' },
-  { key: 'peoplePleasingMoment', text: '今天有没有哪一刻，我是在迎合别人，而不是表达自己？' },
-  { key: 'trueDesire',           text: '今天我真正想要的是什么？' },
-  { key: 'unexpressedEmotion',   text: '今天我有什么情绪，但没有表达出来？' },
-  { key: 'selfAction',           text: '今天我做了什么是为了自己？' }
+  { key: 'biggestRipple', text: '1. 今天最起波澜的一件事是什么。' },
+  { key: 'firstReaction', text: '2. 当时我的第一反应是什么。' },
+  { key: 'reallyWanted',  text: '3. 我其实想得到什么。' },
+  { key: 'reallyFeared',  text: '4. 我其实在害怕什么。' },
+  { key: 'excuseIGave',   text: '5. 我给自己找了什么理由。' },
+  { key: 'mainStone',     text: '6. 今天捞出来的主石头是什么。' },
+  { key: 'nextChoice',    text: '7. 如果明天再遇到同样的事，我准备怎么选。' }
 ];
 
 const app = document.getElementById('app');
