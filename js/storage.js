@@ -3,16 +3,17 @@
   所有记录都用浏览器的 localStorage 保存在手机本地，
   不联网、不登录、不上传到任何服务器。
 
-  一条记录的结构（与原需求一致）：
+  一条记录的结构（「道痕」模板，七个问题）：
   {
-    id,                     // 唯一标识
-    createdAt,              // 创建时间（ISO 字符串）
-    energyMoment,           // 今天什么时候最有能量？
-    tiredMoment,            // 今天什么时候最疲惫？
-    peoplePleasingMoment,   // 今天有没有哪一刻，我是在迎合别人，而不是表达自己？
-    trueDesire,             // 今天我真正想要的是什么？
-    unexpressedEmotion,     // 今天我有什么情绪，但没有表达出来？
-    selfAction              // 今天我做了什么是为了自己？
+    id,                // 唯一标识
+    createdAt,         // 创建时间（ISO 字符串）
+    biggestRipple,     // 今天最起波澜的一件事是什么。
+    firstReaction,     // 当时我的第一反应是什么。
+    reallyWanted,      // 我其实想得到什么。
+    reallyFeared,      // 我其实在害怕什么。
+    excuseIGave,       // 我给自己找了什么理由。
+    mainStone,         // 今天捞出来的主石头是什么。
+    nextChoice         // 如果明天再遇到同样的事，我准备怎么选。
   }
 */
 
@@ -55,12 +56,13 @@ const Store = {
       {
         id: this.newId(),
         createdAt: new Date().toISOString(),
-        energyMoment: '',
-        tiredMoment: '',
-        peoplePleasingMoment: '',
-        trueDesire: '',
-        unexpressedEmotion: '',
-        selfAction: ''
+        biggestRipple: '',
+        firstReaction: '',
+        reallyWanted: '',
+        reallyFeared: '',
+        excuseIGave: '',
+        mainStone: '',
+        nextChoice: ''
       },
       fields
     );
@@ -83,5 +85,10 @@ const Store = {
   remove(id) {
     const list = this.all().filter(r => r.id !== id);
     this.saveAll(list);
+  },
+
+  // 删除全部记录（重置密码时使用）
+  clearAll() {
+    localStorage.removeItem(this.KEY);
   }
 };
